@@ -1,0 +1,79 @@
+import random
+import json
+import hashlib
+import sys
+from Crypto.Cipher import AES
+from base64 import b64encode, b64decode
+import clipboard
+import getpass as gp
+class manager(object):
+    iv = b'idhnclx1734bs8av'
+
+    def __init__(self):
+        self.salt = ''
+        self.masterPassword = ''
+        self.start('', '')
+
+    def masterPassword_setter(self, value:str)->None:
+        r =  random.Random(value)
+        self.salt = ''
+        for i in range(32):
+            self.salt += (chr((int(r.random()*(127-33))+33)))
+        self.masterPassword = value + self.salt[len(value):]
+
+    def start(self, masterPassword:str, file:str)->None:
+        self.masterPassword_setter(masterPassword)
+        self.file = file
+        self.data = {}
+
+    def checkmasterPW(self, pw:str)->bool:
+        if(hashlib.sha512((pw).encode('ascii')).hexdigest() == self.data['masterPassword']):
+            return True
+        return False
+
+    def initialisiere(self):
+        try:
+            with open(self.file,'r') as f:
+                self.data = json.load(f)
+        except FileNotFoundError:
+            pass
+        except NameError:
+            pass
+
+    def add_password(self, password_site:str, password:str) -> None:
+        cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
+        ct_bytes = cipher.encrypt(password.encode())
+        self.data[password_site] = b64encode(ct_bytes).decode('utf-8')
+        self.save()
+
+    def save(self) -> None:
+        with open(self.file, 'w') as f:
+            json.dump(self.data,f, indent = 4)
+
+    def read_password(self, password_site:str)-> None:
+        cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
+        clipboard.copy(cipher.decrypt(b64decode(self.data[password_site])).decode())
+
+    def create_new_manager(self) -> None:
+        self.cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
+        self.data= {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
+        with open(self.file, 'w') as f:
+            json.dump(self.data,f, indent = 4)
+
+    @staticmethod
+    def generator(x: int = 64) -> str:
+        if (type(x) is not int or x <1):
+            raise ValueError('x has to be a positive integer')
+        if(x<10):
+            if input('x is verry small, your password is not secure Continue (y/n)?\n') == 'y':
+                pass
+            else:
+                while(True):
+                    try:
+                        return manager.generator(int(input('How many digits?\n')))
+                    except TypeError:
+                        pass
+        j = ""
+        for i in range(x):
+            j += (chr((int(random.random()*(127-33))+33)))
+        return j
