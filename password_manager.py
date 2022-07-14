@@ -24,6 +24,7 @@ class manager(object):
         self.masterPassword_setter(masterPassword)
         self.file = file
         self.data = {}
+        self.initialisiere()
 
     def checkmasterPW(self, pw:str)->bool:
         r =  random.Random(pw)
@@ -56,13 +57,12 @@ class manager(object):
 
     def read_password(self, password_site:str)-> None:
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
-        x = (cipher.decrypt(b64decode(self.data[password_site])).decode('ascii'))
-        clipboard.copy(x)
-        return x
-
+        x = (cipher.decrypt(b64decode(self.data[password_site])))
+        del cipher
+        clipboard.copy(x.decode('ascii'))
+        return x.decode('ascii')
 
     def create_new_manager(self) -> None:
-        self.cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
         self.data= {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
         with open(self.file, 'w') as f:
             json.dump(self.data,f, indent = 4)
