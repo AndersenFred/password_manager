@@ -5,6 +5,14 @@ import password_manager as pm
 import sys
 
 class manager_gui(QWidget):
+    class button(QWidget):
+        def __init__(self, zugehörigkeit, name:str,  connection, position, tag:str = None):
+            x = QPushButton(name, zugehörigkeit)
+            x.move(*position)
+            x.clicked.connect(connection)
+            if (tag != None):
+                x.setToolTip(tag)
+
     def __init__(self):
         self.masterPw_correct = False
         super().__init__()
@@ -13,11 +21,7 @@ class manager_gui(QWidget):
         self.init()
 
     def add_Button(self, name:str,  connection, position, tag:str = None):
-        x = QPushButton(name, self)
-        x.move(*position)
-        x.clicked.connect(connection)
-        if (tag != None):
-            x.setToolTip(tag)
+        return self.button(self, name,  connection, position, tag)
 
     def init(self):
         self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
@@ -32,28 +36,35 @@ class manager_gui(QWidget):
         self.masterPW.setEchoMode(QLineEdit.EchoMode.Password)
         self.masterPW.move(100,50)
         self.masterPW.textChanged.connect(self.masPW_change)
+        self.masterPW.setToolTip('Zur eingabe des Masterpasswort')
 
         self.combobox_pw = QComboBox(self)
         self.combobox_pw.move(100,250)
         self.combobox_pw.setFixedWidth(130)
         self.combobox_pw.currentIndexChanged.connect(self.read_pw)
+        self.combobox_pw.setToolTip('Zur Auswahl des Passworts')
 
         self.add_pw_key = QLineEdit(self)
         self.add_pw_key.move(100,100)
+        self.add_pw_key.setToolTip('Eingabe der Passwortquelle')
 
         self.add_pw = QLineEdit(self)
         self.add_pw.setEchoMode(QLineEdit.EchoMode.Password)
         self.add_pw.move(100,150)
+        self.add_pw.setToolTip('Eingabe des neuen Passworts')
 
         self.filePath = QLineEdit(self)
         self.filePath.move(100,200)
+        self.filePath.setToolTip('Auswahl der Zieldatei')
         self.refresh()
 
     def masPW_change(self):
         self.masterPw_correct = False
+
     def exit(self):
         self.manager.save()
         sys.exit()
+
     def read_pw(self, index):
         index = self.combobox_pw.currentText()
         try:
@@ -67,7 +78,11 @@ class manager_gui(QWidget):
         except KeyError:
             pass
         except UnicodeDecodeError:
-            print('nicht')
+            if (self.masterPW.text() != ''):
+                reply = QMessageBox()
+                reply.setText('Es ist beim decodieren ein Fehler aufgetreten')
+                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+                reply.exec()
 
     def checkmasterPW(self):
         try:
@@ -76,14 +91,12 @@ class manager_gui(QWidget):
                 reply.setText('Masterpasswörter stimmen überein')
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
-
             else:
                 reply = QMessageBox()
                 reply.setText('Masterpasswörter stimmen nicht überein')
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
                 self.masterPw_correct = False
-
         except KeyError:
             reply = QMessageBox()
             reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
@@ -119,6 +132,12 @@ class manager_gui(QWidget):
             x = reply.exec()
             if x == QMessageBox.StandardButton.No:
                 return
+        if  (not self.masterPw_correct):
+            reply = QMessageBox()
+            reply.setText('Das Masterpasswort muss erst validiert werden')
+            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+            reply.exec()
+            return
         try:
             print(self.add_pw.text())
             print('HalloWieGehts' == self.add_pw.text())
@@ -152,6 +171,6 @@ class manager_gui(QWidget):
         except AttributeError:
             reply = QMessageBox()
             reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Yes )
+            reply.setStandardButtons(QMessageBox.StandardButton.Ok )
             x = reply.exec()
             self.refresh()
