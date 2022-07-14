@@ -1,4 +1,3 @@
-import password_manager as pm
 import manager_GUI as mg
 import sys
 from PyQt6.QtWidgets import QApplication
