@@ -8,4 +8,5 @@ if __name__ == '__main__':
     app = mg.manager_gui()
     app.show()
     w.exec()
-    app.manager.save()
+    if app.manager.file != '' and app.masterPw_correct:
+        app.manager.save()
