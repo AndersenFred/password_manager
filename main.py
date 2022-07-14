@@ -9,4 +9,4 @@ if __name__ == '__main__':
     app = mg.manager_gui()
     app.show()
     w.exec()
-    mg.manager_gui()
+    app.manager.save()
