@@ -5,7 +5,6 @@ import sys
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 import clipboard
-import getpass as gp
 class manager(object):
     iv = b'idhnclx1734bs8av'
 
@@ -27,11 +26,16 @@ class manager(object):
         self.data = {}
 
     def checkmasterPW(self, pw:str)->bool:
-        if(hashlib.sha512((pw).encode('ascii')).hexdigest() == self.data['masterPassword']):
+        r =  random.Random(pw)
+        salt = ''
+        for i in range(32):
+            salt += (chr((int(r.random()*(127-33))+33)))
+        if(hashlib.sha512((pw + salt[len(pw):]).encode('ascii')).hexdigest() == self.data['masterPassword']):
             return True
+            masterPassword_setter(pw+salt[len(pw):])
         return False
 
-    def initialisiere(self):
+    def initialisiere(self)->None:
         try:
             with open(self.file,'r') as f:
                 self.data = json.load(f)
@@ -43,7 +47,7 @@ class manager(object):
     def add_password(self, password_site:str, password:str) -> None:
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
         ct_bytes = cipher.encrypt(password.encode())
-        self.data[password_site] = b64encode(ct_bytes).decode('utf-8')
+        self.data[password_site] = b64encode(ct_bytes).decode('ascii')
         self.save()
 
     def save(self) -> None:
@@ -52,7 +56,9 @@ class manager(object):
 
     def read_password(self, password_site:str)-> None:
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
-        clipboard.copy(cipher.decrypt(b64decode(self.data[password_site])).decode())
+        x = (cipher.decrypt(b64decode(self.data[password_site])).decode('ascii'))
+        clipboard.copy(x)
+
 
     def create_new_manager(self) -> None:
         self.cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
