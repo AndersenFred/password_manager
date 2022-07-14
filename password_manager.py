@@ -58,6 +58,7 @@ class manager(object):
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
         x = (cipher.decrypt(b64decode(self.data[password_site])).decode('ascii'))
         clipboard.copy(x)
+        return x
 
 
     def create_new_manager(self) -> None:
