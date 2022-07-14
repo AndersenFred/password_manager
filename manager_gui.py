@@ -68,7 +68,7 @@ class manager_gui(QWidget):
     def read_pw(self, index):
         index = self.combobox_pw.currentText()
         try:
-            if(self.masterPw_correct or True):
+            if(self.masterPw_correct):
                 self.manager.read_password(index)
             elif (self.masterPW.text() != ''):
                 reply = QMessageBox()
@@ -85,12 +85,15 @@ class manager_gui(QWidget):
                 reply.exec()
 
     def checkmasterPW(self):
+        self.manager.start(self.masterPW.text(), self.filePath.text())
         try:
             if (self.manager.checkmasterPW(self.masterPW.text())):
                 reply = QMessageBox()
                 reply.setText('Masterpasswörter stimmen überein')
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
+                self.masterPw_correct = True
+                self.refresh()
             else:
                 reply = QMessageBox()
                 reply.setText('Masterpasswörter stimmen nicht überein')
@@ -108,15 +111,16 @@ class manager_gui(QWidget):
         self.add_pw.setText(x)
 
     def refresh(self):
-        self.manager.initialisiere()
-        self.combobox_pw.clear()
-        try:
-            self.keys = self.manager.data.keys()
-            for i in self.keys:
-                if i != 'masterPassword':
-                    self.combobox_pw.addItem(i)
-        except NameError:
-            pass
+        if self.masterPw_correct:
+            self.manager.initialisiere()
+            self.combobox_pw.clear()
+            try:
+                self.keys = self.manager.data.keys()
+                for i in self.keys:
+                    if i != 'masterPassword':
+                        self.combobox_pw.addItem(i)
+            except NameError:
+                pass
 
     def newPW(self):
         if self.add_pw_key.text()=='':
@@ -153,7 +157,6 @@ class manager_gui(QWidget):
         fd = QFileDialog()
         self.fileName = fd.getOpenFileName(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop', '(*.json)')
         self.filePath.setText(self.fileName[0])
-        self.manager.start(self.masterPW.text(), self.filePath.text())
         self.refresh()
 
     def newManager(self):
