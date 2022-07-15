@@ -176,14 +176,13 @@ class manager_gui(QWidget):
 
     def newManager(self):
         try:
-            if (self.filePath.text()==''):
-                text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
-                text = chr(92) + text + '.json'
-                if not ok:
-                    return
-                fd = QFileDialog()
-                filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
-                self.manager.file = filepath.replace('/', chr(92))+text
+            text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
+            text = chr(92) + text + '.json'
+            if not ok:
+                return
+            fd = QFileDialog()
+            filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
+            self.manager.file = filepath.replace('/', chr(92))+text
             reply = QMessageBox()
             reply.setText('Bestehende Dateien werden überschrieben\nDies kann nicht rückgängig gemacht werden')
             reply.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
