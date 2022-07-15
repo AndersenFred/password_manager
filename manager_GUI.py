@@ -24,6 +24,8 @@ class manager_gui(QWidget):
         return self.button(self, name,  connection, position, tag)
 
     def init(self):
+        self.setGeometry(50,50,450,400)
+        self.setWindowTitle('Passwortmanager')
         self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
         self.add_Button('Neues Passwort hinzufügen', self.newPW, (250, 100), 'Fügt ein neues Passwort hinzu')
         self.add_Button('Passwort generieren', self.generator, (250, 150), 'Generiert ein 64 zeichen langes Passwort')
@@ -54,9 +56,12 @@ class manager_gui(QWidget):
         self.add_pw.setToolTip('Eingabe des neuen Passworts')
 
         self.pw_gen_len = QSpinBox(self)
-        self.pw_gen_len.move(50,150)
+        self.pw_gen_len.move(40,150)
         self.pw_gen_len.setValue(64)
-
+        self.pw_gen_len.setFixedWidth(50)
+        self.pw_gen_len.setToolTip('Legt die länge des genergierten Passworts fest')
+        self.pw_gen_len.setMaximum(1024)
+        self.pw_gen_len.setMinimum (1)
 
         self.filePath = QLineEdit(self)
         self.filePath.move(100,200)
@@ -112,7 +117,6 @@ class manager_gui(QWidget):
             reply.exec()
 
     def generator(self):
-
         x = pm.manager.generator(self.pw_gen_len.value())
         self.add_pw.setText(x)
 
@@ -166,21 +170,34 @@ class manager_gui(QWidget):
 
     def filePath_press(self):
         fd = QFileDialog()
-        self.fileName = fd.getOpenFileName(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop', '(*.json)')
-        self.filePath.setText(self.fileName[0])
+        fileName = fd.getOpenFileName(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop', '(*.json)')
+        self.filePath.setText(fileName[0])
         self.refresh()
 
     def newManager(self):
         try:
             if (self.filePath.text()==''):
-                raise AttributeError
+                text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
+                text = chr(92) + text + '.json'
+                if not ok:
+                    return
+                fd = QFileDialog()
+                filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
+                self.manager.file = filepath.replace('/', chr(92))+text
             reply = QMessageBox()
             reply.setText('Bestehende Dateien werden überschrieben\nDies kann nicht rückgängig gemacht werden')
             reply.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             x = reply.exec()
             if(x == QMessageBox.StandardButton.Yes):
                 self.manager.masterPassword_setter(self.masterPW.text())
-                self.manager.create_new_manager()
+                try:
+                    self.manager.create_new_manager()
+                except PermissionError:
+                    reply = QMessageBox()
+                    reply.setText('Permission Denied')
+                    reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    reply.exec()
+                    return
                 self.refresh()
         except AttributeError:
             reply = QMessageBox()
