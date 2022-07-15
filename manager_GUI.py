@@ -6,8 +6,8 @@ import sys
 
 class manager_gui(QWidget):
     class button(QWidget):
-        def __init__(self, zugehörigkeit, name:str,  connection, position, tag:str = None):
-            x = QPushButton(name, zugehörigkeit)
+        def __init__(self, zugehoerigkeit, name:str,  connection, position, tag:str = None):
+            x = QPushButton(name, zugehoerigkeit)
             x.move(*position)
             x.clicked.connect(connection)
             if (tag != None):
@@ -176,6 +176,12 @@ class manager_gui(QWidget):
 
     def newManager(self):
         try:
+            if self.masterPW.text() == '':
+                reply = QMessageBox()
+                reply.setText('Bitte gib erst ein Masterpasswort ein')
+                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+                reply.exec()
+                return              
             text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
             if not ok:
                 return
