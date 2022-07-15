@@ -64,6 +64,7 @@ class manager(object):
 
     def create_new_manager(self) -> None:
         self.data= {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
+        print(self.file)
         with open(self.file, 'w') as f:
             json.dump(self.data,f, indent = 4)
 
