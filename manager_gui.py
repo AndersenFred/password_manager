@@ -53,6 +53,11 @@ class manager_gui(QWidget):
         self.add_pw.move(100,150)
         self.add_pw.setToolTip('Eingabe des neuen Passworts')
 
+        self.pw_gen_len = QSpinBox(self)
+        self.pw_gen_len.move(50,150)
+        self.pw_gen_len.setValue(64)
+
+
         self.filePath = QLineEdit(self)
         self.filePath.move(100,200)
         self.filePath.setToolTip('Auswahl der Zieldatei')
@@ -107,7 +112,8 @@ class manager_gui(QWidget):
             reply.exec()
 
     def generator(self):
-        x = pm.manager.generator(64)
+
+        x = pm.manager.generator(self.pw_gen_len.value())
         self.add_pw.setText(x)
 
     def refresh(self):
@@ -125,10 +131,17 @@ class manager_gui(QWidget):
     def newPW(self):
         if self.add_pw_key.text()=='':
             reply = QMessageBox()
-            reply.setText('Es muss eingegeben werden zu was das Passwort gehört')
+            reply.setText('Es muss erst eine Quelle für das Passwort eingegeben werden')
             reply.setStandardButtons(QMessageBox.StandardButton.Ok)
             reply.exec()
             return
+        if (self.add_pw_key.text() in self.manager.data):
+            reply = QMessageBox()
+            reply.setText('Zu dieser Quelle gibt es bereits ein Passwort.\nÜberschreiben?')
+            reply.setStandardButtons(QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)
+            x = reply.exec()
+            if x == QMessageBox.StandardButton.No:
+                return
         if len(self.add_pw.text()) < 10:
             reply = QMessageBox()
             reply.setText('das passwort ist sehr kurz.\nTrozudem weiter?')
@@ -143,8 +156,6 @@ class manager_gui(QWidget):
             reply.exec()
             return
         try:
-            print(self.add_pw.text())
-            print('HalloWieGehts' == self.add_pw.text())
             self.manager.add_password(self.add_pw_key.text(), self.add_pw.text())
             self.refresh()
         except FileNotFoundError:
