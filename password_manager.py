@@ -1,195 +1,77 @@
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-import getpass
-import password_manager as pm
+import random
+import json
+import hashlib
 import sys
-
-class manager_gui(QWidget):
-    class button(QWidget):
-        def __init__(self, zugehörigkeit, name:str,  connection, position, tag:str = None):
-            x = QPushButton(name, zugehörigkeit)
-            x.move(*position)
-            x.clicked.connect(connection)
-            if (tag != None):
-                x.setToolTip(tag)
+from Crypto.Cipher import AES
+from base64 import b64encode, b64decode
+import clipboard
+class manager(object):
+    iv = b'idhnclx1734bs8av'
 
     def __init__(self):
-        self.masterPw_correct = False
-        super().__init__()
-        self.keys = []
-        self.manager = pm.manager()
-        self.init()
+        self.salt = ''
+        self.masterPassword = ''
+        self.start('', '')
 
-    def add_Button(self, name:str,  connection, position, tag:str = None):
-        return self.button(self, name,  connection, position, tag)
+    def masterPassword_setter(self, value:str)->None:
+        r =  random.Random(value)
+        self.salt = ''
+        for i in range(32):
+            self.salt += (chr((int(r.random()*(127-33))+33)))
+        self.masterPassword = value + self.salt[len(value):]
 
-    def init(self):
-        self.setGeometry(50,50,450,400)
-        self.setWindowTitle('Passwortmanager')
-        self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
-        self.add_Button('Neues Passwort hinzufügen', self.newPW, (250, 100), 'Fügt ein neues Passwort hinzu')
-        self.add_Button('Passwort generieren', self.generator, (250, 150), 'Generiert ein 64 zeichen langes Passwort')
-        self.add_Button('Refresh', self.refresh,(250, 250), 'Läd die gespeicherten Passwörter neu')
-        self.add_Button('Browse', self.filePath_press,(250,200), 'Öffnet den Dateiexplorer zur Auswahl der Speicherungsdatei')
-        self.add_Button('Neuen Manager anlegen', self.newManager,(100,300), 'Erzeugt eine neue Speicherungsdatei.\nÜberschreibt bereits bestehende Dateien')
-        self.add_Button('Exit', self.exit, (250,300),'Beendet das Programm')
+    def start(self, masterPassword:str, file:str)->None:
+        self.masterPassword_setter(masterPassword)
+        self.file = file
+        self.data = {}
+        self.initialisiere()
 
-        self.masterPW = QLineEdit(self)
-        self.masterPW.setEchoMode(QLineEdit.EchoMode.Password)
-        self.masterPW.move(100,50)
-        self.masterPW.textChanged.connect(self.masPW_change)
-        self.masterPW.setToolTip('Zur eingabe des Masterpasswort')
+    def checkmasterPW(self, pw:str)->bool:
+        r =  random.Random(pw)
+        salt = ''
+        for i in range(32):
+            salt += (chr((int(r.random()*(127-33))+33)))
+        if(hashlib.sha512((pw + salt[len(pw):]).encode('ascii')).hexdigest() == self.data['masterPassword']):
+            return True
+            masterPassword_setter(pw+salt[len(pw):])
+        return False
 
-        self.combobox_pw = QComboBox(self)
-        self.combobox_pw.move(100,250)
-        self.combobox_pw.setFixedWidth(130)
-        self.combobox_pw.currentIndexChanged.connect(self.read_pw)
-        self.combobox_pw.setToolTip('Zur Auswahl des Passworts')
-
-        self.add_pw_key = QLineEdit(self)
-        self.add_pw_key.move(100,100)
-        self.add_pw_key.setToolTip('Eingabe der Passwortquelle')
-
-        self.add_pw = QLineEdit(self)
-        self.add_pw.setEchoMode(QLineEdit.EchoMode.Password)
-        self.add_pw.move(100,150)
-        self.add_pw.setToolTip('Eingabe des neuen Passworts')
-
-        self.pw_gen_len = QSpinBox(self)
-        self.pw_gen_len.move(40,150)
-        self.pw_gen_len.setValue(64)
-        self.pw_gen_len.setFixedWidth(50)
-        self.pw_gen_len.setToolTip('Legt die länge des genergierten Passworts fest')
-        self.pw_gen_len.setMaximum(1024)
-        self.pw_gen_len.setMinimum (1)
-
-        self.filePath = QLineEdit(self)
-        self.filePath.move(100,200)
-        self.filePath.setToolTip('Auswahl der Zieldatei')
-        self.refresh()
-
-    def masPW_change(self):
-        self.masterPw_correct = False
-
-    def exit(self):
-        self.manager.save()
-        sys.exit()
-
-    def read_pw(self, index):
-        index = self.combobox_pw.currentText()
+    def initialisiere(self)->None:
         try:
-            if(self.masterPw_correct):
-                self.manager.read_password(index)
-            elif (self.masterPW.text() != ''):
-                reply = QMessageBox()
-                reply.setText('Es muss erst das Masterpasswort validiert werden')
-                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-                reply.exec()
-        except KeyError:
-            pass
-        except UnicodeDecodeError:
-            if (self.masterPW.text() != ''):
-                reply = QMessageBox()
-                reply.setText('Es ist beim decodieren ein Fehler aufgetreten')
-                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-                reply.exec()
-
-    def checkmasterPW(self):
-        self.manager.start(self.masterPW.text(), self.filePath.text())
-        try:
-            if (self.manager.checkmasterPW(self.masterPW.text())):
-                reply = QMessageBox()
-                reply.setText('Masterpasswörter stimmen überein')
-                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-                reply.exec()
-                self.masterPw_correct = True
-                self.refresh()
-            else:
-                reply = QMessageBox()
-                reply.setText('Masterpasswörter stimmen nicht überein')
-                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-                reply.exec()
-                self.masterPw_correct = False
-        except KeyError:
-            reply = QMessageBox()
-            reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-            reply.exec()
-
-    def generator(self):
-
-        x = pm.manager.generator(self.pw_gen_len.value())
-        self.add_pw.setText(x)
-
-    def refresh(self):
-        if self.masterPw_correct:
-            self.manager.initialisiere()
-            self.combobox_pw.clear()
-            try:
-                self.keys = self.manager.data.keys()
-                for i in self.keys:
-                    if i != 'masterPassword':
-                        self.combobox_pw.addItem(i)
-            except NameError:
-                pass
-
-    def newPW(self):
-        if self.add_pw_key.text()=='':
-            reply = QMessageBox()
-            reply.setText('Es muss erst eine Quelle für das Passwort eingegeben werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-            reply.exec()
-            return
-        if (self.add_pw_key.text() in self.manager.data):
-            reply = QMessageBox()
-            reply.setText('Zu dieser Quelle gibt es bereits ein Passwort.\nÜberschreiben?')
-            reply.setStandardButtons(QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)
-            x = reply.exec()
-            if x == QMessageBox.StandardButton.No:
-                return
-        if len(self.add_pw.text()) < 10:
-            reply = QMessageBox()
-            reply.setText('das passwort ist sehr kurz.\nTrozudem weiter?')
-            reply.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            x = reply.exec()
-            if x == QMessageBox.StandardButton.No:
-                return
-        if  (not self.masterPw_correct):
-            reply = QMessageBox()
-            reply.setText('Das Masterpasswort muss erst validiert werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-            reply.exec()
-            return
-        try:
-            self.manager.add_password(self.add_pw_key.text(), self.add_pw.text())
-            self.refresh()
+            with open(self.file,'r') as f:
+                self.data = json.load(f)
         except FileNotFoundError:
-            reply = QMessageBox()
-            reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-            reply.exec()
+            pass
+        except NameError:
+            pass
 
-    def filePath_press(self):
-        fd = QFileDialog()
-        self.fileName = fd.getOpenFileName(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop', '(*.json)')
-        self.filePath.setText(self.fileName[0])
-        self.refresh()
+    def add_password(self, password_site:str, password:str) -> None:
+        cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
+        ct_bytes = cipher.encrypt(password.encode())
+        self.data[password_site] = b64encode(ct_bytes).decode('ascii')
+        self.save()
 
-    def newManager(self):
-        try:
-            if (self.filePath.text()==''):
-                raise AttributeError
-            reply = QMessageBox()
-            reply.setText('Bestehende Dateien werden überschrieben\nDies kann nicht rückgängig gemacht werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-            x = reply.exec()
-            if(x == QMessageBox.StandardButton.Yes):
-                self.manager.masterPassword_setter(self.masterPW.text())
-                self.manager.create_new_manager()
-                self.refresh()
-        except AttributeError:
-            reply = QMessageBox()
-            reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok )
-            x = reply.exec()
-            self.refresh()
+    def save(self) -> None:
+        with open(self.file, 'w') as f:
+            json.dump(self.data,f, indent = 4)
+
+    def read_password(self, password_site:str)-> None:
+        cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
+        x = (cipher.decrypt(b64decode(self.data[password_site])))
+        del cipher
+        clipboard.copy(x.decode('ascii'))
+        return x.decode('ascii')
+
+    def create_new_manager(self) -> None:
+        self.data= {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
+        with open(self.file, 'w') as f:
+            json.dump(self.data,f, indent = 4)
+
+    @staticmethod
+    def generator(x: int = 64) -> str:
+        if (type(x) is not int or x <0):
+            raise ValueError('x has to be a positive integer')
+        j = ""
+        for i in range(x):
+            j += (chr((int(random.random()*(127-33))+33)))
+        return j
