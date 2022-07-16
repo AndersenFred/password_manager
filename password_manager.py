@@ -32,7 +32,7 @@ class manager(object):
         for i in range(32):
             salt += (chr((int(r.random()*(127-33))+33)))
         if(hashlib.sha512((pw + salt[len(pw):]).encode('ascii')).hexdigest() == self.data['masterPassword']):
-            masterPassword_setter(pw+salt[len(pw):]) 
+            self.masterPassword_setter(pw+salt[len(pw):]) 
             return True
         return False
 
