@@ -25,14 +25,16 @@ class manager_gui(QWidget):
 
     def init(self):
         self.setGeometry(50,50,450,400)
+        self.setWindowIcon(QIcon('icon.png'))
         self.setWindowTitle('Passwortmanager')
         self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
         self.add_Button('Neues Passwort hinzufügen', self.newPW, (250, 100), 'Fügt ein neues Passwort hinzu')
         self.add_Button('Passwort generieren', self.generator, (250, 150), 'Generiert ein 64 zeichen langes Passwort')
-        self.add_Button('Refresh', self.refresh,(250, 250), 'Läd die gespeicherten Passwörter neu')
+        #self.add_Button('Refresh', self.refresh,(0, 250), 'Läd die gespeicherten Passwörter neu')
         self.add_Button('Browse', self.filePath_press,(250,200), 'Öffnet den Dateiexplorer zur Auswahl der Speicherungsdatei')
         self.add_Button('Neuen Manager anlegen', self.newManager,(100,300), 'Erzeugt eine neue Speicherungsdatei.\nÜberschreibt bereits bestehende Dateien')
         self.add_Button('Exit', self.exit, (250,300),'Beendet das Programm')
+        self.add_Button('Passwort kopieren', self.read_pw,(250,250),'Kopiert das ausgewählte Passwort in die Zwischenablage')
 
         self.masterPW = QLineEdit(self)
         self.masterPW.setEchoMode(QLineEdit.EchoMode.Password)
@@ -43,7 +45,6 @@ class manager_gui(QWidget):
         self.combobox_pw = QComboBox(self)
         self.combobox_pw.move(100,250)
         self.combobox_pw.setFixedWidth(130)
-        self.combobox_pw.currentIndexChanged.connect(self.read_pw)
         self.combobox_pw.setToolTip('Zur Auswahl des Passworts')
 
         self.add_pw_key = QLineEdit(self)
@@ -70,12 +71,15 @@ class manager_gui(QWidget):
 
     def masPW_change(self):
         self.masterPw_correct = False
+        self.refresh()
 
     def exit(self):
+        self.refresh()
         self.manager.save()
         sys.exit()
 
     def read_pw(self, index):
+        self.refresh()
         index = self.combobox_pw.currentText()
         try:
             if(self.masterPw_correct):
@@ -93,8 +97,10 @@ class manager_gui(QWidget):
                 reply.setText('Es ist beim decodieren ein Fehler aufgetreten')
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
+        self.refresh()
 
     def checkmasterPW(self):
+        self.refresh()
         self.manager.start(self.masterPW.text(), self.filePath.text())
         try:
             if (self.manager.checkmasterPW(self.masterPW.text())):
@@ -103,7 +109,6 @@ class manager_gui(QWidget):
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
                 self.masterPw_correct = True
-                self.refresh()
             else:
                 reply = QMessageBox()
                 reply.setText('Masterpasswörter stimmen nicht überein')
@@ -115,10 +120,11 @@ class manager_gui(QWidget):
             reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
             reply.setStandardButtons(QMessageBox.StandardButton.Ok)
             reply.exec()
+        self.refresh()
 
     def generator(self):
-        x = pm.manager.generator(self.pw_gen_len.value())
-        self.add_pw.setText(x)
+        self.add_pw.setText(pm.manager.generator(self.pw_gen_len.value()))
+        self.refresh()
 
     def refresh(self):
         if self.masterPw_correct:
@@ -181,7 +187,7 @@ class manager_gui(QWidget):
                 reply.setText('Bitte gib erst ein Masterpasswort ein')
                 reply.setStandardButtons(QMessageBox.StandardButton.Ok)
                 reply.exec()
-                return              
+                return
             text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
             if not ok:
                 return
