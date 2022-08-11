@@ -35,7 +35,7 @@ class manager_gui(QWidget):
         self.add_Button('Neuen Manager anlegen', self.newManager,(100,300), 'Erzeugt eine neue Speicherungsdatei.\nÜberschreibt bereits bestehende Dateien')
         self.add_Button('Exit', self.exit, (250,300),'Beendet das Programm')
         self.add_Button('Passwort kopieren', self.read_pw,(250,250),'Kopiert das ausgewählte Passwort in die Zwischenablage')
-
+        self.add_Button('Masterpasswort ändern', self.change_master_pw,(350,50),'Aktualisiert das Masterpasswort, das alte muss eingegebern sein.')
         self.masterPW = QLineEdit(self)
         self.masterPW.setEchoMode(QLineEdit.EchoMode.Password)
         self.masterPW.move(100,50)
@@ -137,6 +137,23 @@ class manager_gui(QWidget):
                         self.combobox_pw.addItem(i)
             except NameError:
                 pass
+
+    def  change_master_pw(self):
+        if  (not self.masterPw_correct):
+            reply = QMessageBox()
+            reply.setText('Das Masterpasswort muss erst validiert werden')
+            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+            reply.exec()
+            return
+        passwords = []
+        for index in self.keys:
+            passwords.append([index,self.manager.read_password(index)])
+        for index in passwords:
+            self.manager.add_password(index[0],index[1])
+        self.refresh()
+        self.manager.save()    
+
+
 
     def newPW(self):
         if self.add_pw_key.text()=='':
