@@ -32,7 +32,7 @@ class manager(object):
         for i in range(32):
             salt += (chr((int(r.random()*(127-33))+33)))
         if(hashlib.sha512((pw + salt[len(pw):]).encode('ascii')).hexdigest() == self.data['masterPassword']):
-            self.masterPassword_setter(pw+salt[len(pw):]) 
+            self.masterPassword_setter(pw+salt[len(pw):])
             return True
         return False
 
@@ -55,7 +55,7 @@ class manager(object):
         with open(self.file, 'w') as f:
             json.dump(self.data,f, indent = 4)
 
-    def read_password(self, password_site:str)-> None:
+    def read_password(self, password_site:str)-> str:
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
         x = (cipher.decrypt(b64decode(self.data[password_site])))
         del cipher
@@ -75,3 +75,8 @@ class manager(object):
         for i in range(x):
             j += (chr((int(random.random()*(127-33))+33)))
         return j
+
+
+#Change master PW
+#by creating new, automatically choose location and validate
+#when no location is choosen use appdata\.pwmanager_created_by_cookie or similar
