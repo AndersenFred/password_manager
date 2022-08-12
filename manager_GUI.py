@@ -26,7 +26,7 @@ class manager_gui(QWidget):
         return self.button(self, name,  connection, position, tag)
 
     def init(self):
-        self.setGeometry(50,50,450,450)
+        self.setGeometry(50,50,550,400)
         self.setWindowIcon(QIcon('icon.png'))
         self.setWindowTitle('Passwortmanager')
         self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
@@ -77,6 +77,15 @@ class manager_gui(QWidget):
 
     def exit(self):
         self.refresh()
+        if not self.masterPw_correct and not self.filePath.text() == '':
+            reply = QMessageBox()
+            reply.setText('Das Masterpasswort ist nicht validiert, änderungen werden evlt. nicht gespeichert.\n Trotzdem schließen?')
+            reply.setStandardButtons(QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No)
+            x = reply.exec()
+            if x == QMessageBox.StandardButton.No:
+                return
+            else:
+                sys.exit()
         self.manager.save()
         sys.exit()
 
