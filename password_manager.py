@@ -55,11 +55,12 @@ class manager(object):
         with open(self.file, 'w') as f:
             json.dump(self.data,f, indent = 4)
 
-    def read_password(self, password_site:str)-> str:
+    def read_password(self, password_site:str, copy = True)-> str:
         cipher = AES.new(key = self.masterPassword.encode(), mode = AES.MODE_CFB, iv = manager.iv)
         x = (cipher.decrypt(b64decode(self.data[password_site])))
         del cipher
-        clipboard.copy(x.decode('ascii'))
+        if copy:
+            clipboard.copy(x.decode('ascii'))
         return x.decode('ascii')
 
     def create_new_manager(self) -> None:
@@ -75,8 +76,3 @@ class manager(object):
         for i in range(x):
             j += (chr((int(random.random()*(127-33))+33)))
         return j
-
-
-#Change master PW
-#by creating new, automatically choose location and validate
-#when no location is choosen use appdata\.pwmanager_created_by_cookie or similar
