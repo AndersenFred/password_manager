@@ -3,6 +3,8 @@ from PyQt6.QtGui import *
 import getpass
 import password_manager as pm
 import sys
+import os
+import hashlib
 
 class manager_gui(QWidget):
     class button(QWidget):
@@ -24,7 +26,7 @@ class manager_gui(QWidget):
         return self.button(self, name,  connection, position, tag)
 
     def init(self):
-        self.setGeometry(50,50,450,400)
+        self.setGeometry(50,50,450,450)
         self.setWindowIcon(QIcon('icon.png'))
         self.setWindowTitle('Passwortmanager')
         self.add_Button('Masterpasswort', self.checkmasterPW, (250,50), 'Überprüft ob das Masterpasswort stimmt')
@@ -78,9 +80,10 @@ class manager_gui(QWidget):
         self.manager.save()
         sys.exit()
 
-    def read_pw(self, index):
-        self.refresh()
+    def read_pw(self):
         index = self.combobox_pw.currentText()
+        self.refresh()
+        print(index)
         try:
             if(self.masterPw_correct):
                 self.manager.read_password(index)
@@ -116,10 +119,19 @@ class manager_gui(QWidget):
                 reply.exec()
                 self.masterPw_correct = False
         except KeyError:
-            reply = QMessageBox()
-            reply.setText('Es muss erst ein Dateipfad ausgewählt werden')
-            reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-            reply.exec()
+            name, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb den Dateinamen ein:')
+            if not ok:
+                return
+            self.filePath.setText(f'C:\\Users\{getpass.getuser()}\AppData\Roaming\.cookies_pw_manager\{name}')
+            if os.path.isdir(f'C:\\Users\{getpass.getuser()}\AppData\Roaming\.cookies_pw_manager\ '):
+                if os.path.isfile(name):
+                    self.refresh
+                    return
+                else:
+                    self.newManager(name, f'C:\\Users\{getpass.getuser()}\AppData\Roaming\.cookies_pw_manager')
+            else:
+                os.makedirs(f'C:\\Users\{getpass.getuser()}\AppData\Roaming\.cookies_pw_manager')
+                self.newManager(name, f'C:\\Users\{getpass.getuser()}\AppData\Roaming\.cookies_pw_manager')
         self.refresh()
 
     def generator(self):
@@ -127,6 +139,11 @@ class manager_gui(QWidget):
         self.refresh()
 
     def refresh(self):
+        index = self.combobox_pw.currentIndex()
+        try:
+            self.masterPw_correct = self.manager.checkmasterPW(self.masterPW.text())
+        except KeyError:
+            pass
         if self.masterPw_correct:
             self.manager.initialisiere()
             self.combobox_pw.clear()
@@ -137,8 +154,9 @@ class manager_gui(QWidget):
                         self.combobox_pw.addItem(i)
             except NameError:
                 pass
+        self.combobox_pw.setCurrentIndex(index)
 
-    def  change_master_pw(self):
+    def change_master_pw(self):
         if  (not self.masterPw_correct):
             reply = QMessageBox()
             reply.setText('Das Masterpasswort muss erst validiert werden')
@@ -147,11 +165,20 @@ class manager_gui(QWidget):
             return
         passwords = []
         for index in self.keys:
-            passwords.append([index,self.manager.read_password(index)])
+            if index == 'masterPassword':
+                continue
+            print(index)
+            passwords.append((index, self.manager.read_password(index, copy = False)))
+        new_pw, ok = QInputDialog.getText(self, 'Passwort', 'Bitte geb das neue Passwort ein:', QLineEdit.EchoMode.Password)
+        if not ok:
+            return
+        self.manager.masterPassword_setter(new_pw)
+        self.masterPW.setText(new_pw)
+        self.manager.data= {'masterPassword':hashlib.sha512((self.manager.masterPassword).encode('ascii')).hexdigest()}
         for index in passwords:
             self.manager.add_password(index[0],index[1])
         self.refresh()
-        self.manager.save()    
+        self.manager.save()
 
 
 
@@ -197,19 +224,20 @@ class manager_gui(QWidget):
         self.filePath.setText(fileName[0])
         self.refresh()
 
-    def newManager(self):
+    def newManager(self, text = None, filepath = None):
         try:
             if self.masterPW.text() == '':
-                reply = QMessageBox()
-                reply.setText('Bitte gib erst ein Masterpasswort ein')
-                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
-                reply.exec()
-                return
-            text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
-            if not ok:
-                return
+                new_pw, ok = QInputDialog.getText(self, 'Passwort', 'Bitte geb das Masterpasswort ein:', QLineEdit.EchoMode.Password)
+                if not ok:
+                    return
+            self.masterPW.setText(new_pw)
+            if text == None:
+                text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
+                if not ok:
+                    return
             fd = QFileDialog()
-            filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
+            if filepath == None:
+                filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
             if filepath == '':
                 reply = QMessageBox()
                 reply.setText('Kein Zielpfad ausgewählt')
@@ -223,6 +251,7 @@ class manager_gui(QWidget):
             x = reply.exec()
             if(x == QMessageBox.StandardButton.Yes):
                 self.manager.masterPassword_setter(self.masterPW.text())
+                self.filePath.setText(self.manager.file)
                 try:
                     self.manager.create_new_manager()
                 except PermissionError:
