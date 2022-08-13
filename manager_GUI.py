@@ -92,7 +92,6 @@ class manager_gui(QWidget):
     def read_pw(self):
         index = self.combobox_pw.currentText()
         self.refresh()
-        print(index)
         try:
             if(self.masterPw_correct):
                 self.manager.read_password(index)
@@ -233,17 +232,27 @@ class manager_gui(QWidget):
         self.filePath.setText(fileName[0])
         self.refresh()
 
-    def newManager(self, text = None, filepath = None):
+    def newManager(self, text = False, filepath = None):
         try:
             if self.masterPW.text() == '':
                 new_pw, ok = QInputDialog.getText(self, 'Passwort', 'Bitte geb das Masterpasswort ein:', QLineEdit.EchoMode.Password)
                 if not ok:
                     return
-            self.masterPW.setText(new_pw)
-            if text == None:
+                self.masterPW.setText(new_pw)
+            new_pw_2, ok = QInputDialog.getText(self, 'Passwort', 'Bitte geb das Masterpasswort nochmal zur bestätigung ein ein:', QLineEdit.EchoMode.Password)
+            if not ok:
+                return
+            if not self.masterPW.text() == new_pw_2:
+                reply = QMessageBox()
+                reply.setText('Die Passwörter stimmen nicht überein')
+                reply.setStandardButtons(QMessageBox.StandardButton.Ok)
+                reply.exec()
+                return
+            if text == False:
                 text, ok = QInputDialog.getText(self, 'Dateiname', 'Bitte geb einen Dateinamen ein:')
                 if not ok:
                     return
+
             fd = QFileDialog()
             if filepath == None:
                 filepath = fd.getExistingDirectory(self,'Open', f'C:\\Users\{getpass.getuser()}\Desktop')
