@@ -72,7 +72,4 @@ class manager(object):
     def generator(x: int = 64) -> str:
         if (type(x) is not int or x <0):
             raise ValueError('x has to be a positive integer')
-        j = ""
-        for i in range(x):
-            j += (chr((int(random.random()*(127-33))+33)))
-        return j
+        return "".join(random.choices(string.printable, k=x))
