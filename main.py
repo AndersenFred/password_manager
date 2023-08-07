@@ -1,4 +1,4 @@
-import manager_GUI as mg
+from modules import manager_GUI as mg
 import sys
 from PyQt6.QtWidgets import QApplication
 

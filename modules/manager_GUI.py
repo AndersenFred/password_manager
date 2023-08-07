@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 import getpass
-import password_manager as pm
+import modules.password_manager as pm
 import sys
 import os
 import hashlib

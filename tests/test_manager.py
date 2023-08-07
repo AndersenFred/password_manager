@@ -1,8 +1,10 @@
-import pytest
 import random
+
+import os
 import sys
-sys.path.append("..")
-from password_manager import manager
+sys.path.append(os.getcwd())
+from modules import manager
+
 
 def test_generator():
     for _ in range(128):
