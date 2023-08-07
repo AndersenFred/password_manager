@@ -1,7 +1,7 @@
 import pytest
 import random
 import sys
-
+sys.path.append("..")
 from password_manager import manager
 
 def test_generator():
