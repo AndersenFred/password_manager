@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='Password_Manager',
-      version='1.0',
+      version='0.5',
       description='Python password-manager with GUI',
       author='Frederik Andersen',
       author_email='frederik.andersen@fau.de',

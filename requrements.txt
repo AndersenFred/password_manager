@@ -1,3 +1,9 @@
 PyQt6
-pycryptodome
 clipboard
+numpy
+getpass
+json
+hashlib
+PyCryptodome
+base64
+pytest

@@ -1,6 +1,7 @@
 import random
 import json
 import hashlib
+import string
 import sys
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
@@ -12,6 +13,9 @@ class manager(object):
         self.salt = ''
         self.masterPassword = ''
         self.start('', '')
+        self.data = None
+        self.file = None
+
 
     def masterPassword_setter(self, value:str)->None:
         r =  random.Random(value)
