@@ -6,7 +6,8 @@ import sys
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 import clipboard
-class manager(object):
+
+class manager:
     iv = b'idhnclx1734bs8av'
 
     def __init__(self):
@@ -77,3 +78,6 @@ class manager(object):
         if (type(x) is not int or x <0):
             raise ValueError('x has to be a positive integer')
         return "".join(random.choices(string.printable, k=x))
+
+if __name__ == "__main__":
+    pass
