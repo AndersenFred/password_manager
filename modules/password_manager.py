@@ -19,7 +19,10 @@ class manager:
 
 
     def masterPassword_setter(self, value:str)->None:
-        r =  random.Random(value)
+        if value is None:
+            self.masterPassword = None
+            return
+        r = random.Random(value)
         self.salt = ''
         for i in range(32):
             self.salt += (chr((int(r.random()*(127-33))+33)))
@@ -32,7 +35,9 @@ class manager:
         self.initialisiere()
 
     def checkmasterPW(self, pw:str)->bool:
-        r =  random.Random(pw)
+        if pw is None or self.data == {} or self.masterPassword is None:
+            return False
+        r = random.Random(pw)
         salt = ''
         for i in range(32):
             salt += (chr((int(r.random()*(127-33))+33)))
@@ -45,9 +50,7 @@ class manager:
         try:
             with open(self.file,'r') as f:
                 self.data = json.load(f)
-        except FileNotFoundError:
-            pass
-        except NameError:
+        except:
             pass
 
     def add_password(self, password_site:str, password:str) -> None:
@@ -69,15 +72,11 @@ class manager:
         return x.decode('ascii')
 
     def create_new_manager(self) -> None:
-        self.data= {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
-        with open(self.file, 'w') as f:
-            json.dump(self.data,f, indent = 4)
+        self.data = {'masterPassword':hashlib.sha512((self.masterPassword).encode('ascii')).hexdigest()}
+        self.save()
 
     @staticmethod
     def generator(x: int = 64) -> str:
-        if (type(x) is not int or x <0):
+        if (type(x) is not int or x < 0):
             raise ValueError('x has to be a positive integer')
         return "".join(random.choices(string.printable, k=x))
-
-if __name__ == "__main__":
-    pass
